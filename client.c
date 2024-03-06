@@ -78,22 +78,31 @@ int main(int argc, char *argv[]) {
     fread(file_content, file_size, 1, fp);
     file_content[file_size] = '\0';
     build_packet(&pkt, seq_num, ack_num, last, ack, PAYLOAD_SIZE, file_content);
-    sendto(send_sockfd, &pkt, sizeof(pkt), 0, (struct sockaddr *)&server_addr_to, sizeof(server_addr_to));
+    if(sendto(send_sockfd, &pkt, sizeof(pkt), 0, (struct sockaddr *)&server_addr_to, sizeof(server_addr_to)) < 0){
+        printf("send error");
+    }
+    printf(file_content);
     usleep(1000);
 
     seq_num += PAYLOAD_SIZE;
     fread(file_content, file_size, 1, fp);
     file_content[file_size] = '\0';
     build_packet(&pkt, seq_num, ack_num, last, ack, PAYLOAD_SIZE, file_content);
-    sendto(send_sockfd, &pkt, sizeof(pkt), 0, (struct sockaddr *)&server_addr_to, sizeof(server_addr_to));
+    if(sendto(send_sockfd, &pkt, sizeof(pkt), 0, (struct sockaddr *)&server_addr_to, sizeof(server_addr_to)) < 0){
+        printf("send error");
+    }
+    printf(file_content);
     usleep(1000);
 
     seq_num += PAYLOAD_SIZE;
+    last = 1;
     fread(file_content, file_size, 1, fp);
     file_content[file_size] = '\0';
     build_packet(&pkt, seq_num, ack_num, last, ack, PAYLOAD_SIZE, file_content);
-    sendto(send_sockfd, &pkt, sizeof(pkt), 0, (struct sockaddr *)&server_addr_to, sizeof(server_addr_to));
-
+    if(sendto(send_sockfd, &pkt, sizeof(pkt), 0, (struct sockaddr *)&server_addr_to, sizeof(server_addr_to)) < 0){
+        printf("send error");
+    }
+    printf(file_content);
  
     
     fclose(fp);
