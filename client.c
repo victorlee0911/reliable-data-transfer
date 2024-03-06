@@ -72,26 +72,26 @@ int main(int argc, char *argv[]) {
 
     // TODO: Read from file, and initiate reliable data transfer to the server
     //fseek(fp, 0L, SEEK_END);
-    long int file_size = 1000;
+    long int file_size = PAYLOAD_SIZE;
     char *file_content = (char*)malloc(file_size+1);
     // fseek(fp, 0, SEEK_SET);
     fread(file_content, file_size, 1, fp);
     file_content[file_size] = '\0';
-    build_packet(&pkt, seq_num, ack_num, last, ack, 1000, file_content);
-    sendto(send_sockfd, &pkt, len(pkt), 0, &server_addr_to, len(server_addr_to));
+    build_packet(&pkt, seq_num, ack_num, last, ack, PAYLOAD_SIZE, file_content);
+    sendto(send_sockfd, &pkt, len(pkt), 0, &server_addr_to, sizeof(server_addr_to));
     delay(1000);
 
-    seq_num += 1000;
+    seq_num += PAYLOAD_SIZE;
     fread(file_content, file_size, 1, fp);
     file_content[file_size] = '\0';
-    build_packet(&pkt, seq_num, ack_num, last, ack, 1000, file_content);
-    sendto(send_sockfd, &pkt, len(pkt), 0, &server_addr_to, len(server_addr_to));
-    delay(1000);
+    build_packet(&pkt, seq_num, ack_num, last, ack, PAYLOAD_SIZE, file_content);
+    sendto(send_sockfd, &pkt, len(pkt), 0, &server_addr_to, sizeof(server_addr_to));
+    delay(PAYLOAD_SIZE);
 
     fread(file_content, file_size, 1, fp);
     file_content[file_size] = '\0';
-    build_packet(&pkt, seq_num, ack_num, last, ack, 1000, file_content);
-    sendto(send_sockfd, &pkt, len(pkt), 0, &server_addr_to, len(server_addr_to));
+    build_packet(&pkt, seq_num, ack_num, last, ack, PAYLOAD_SIZE, file_content);
+    sendto(send_sockfd, &pkt, len(pkt), 0, &server_addr_to, sizeof(server_addr_to));
 
  
     
