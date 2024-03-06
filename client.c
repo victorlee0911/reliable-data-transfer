@@ -77,17 +77,21 @@ int main(int argc, char *argv[]) {
     // fseek(fp, 0, SEEK_SET);
     fread(file_content, file_size, 1, fp);
     file_content[file_size] = '\0';
-    build_packet(&pkt, 0, 0, 0, 0, 1000, file_content);
+    build_packet(&pkt, seq_num, ack_num, last, ack, 1000, file_content);
+    sendto(send_sockfd, &pkt, len(pkt), 0, &server_addr_to, len(server_addr_to));
+    delay(1000);
+
+    seq_num += 1000;
+    fread(file_content, file_size, 1, fp);
+    file_content[file_size] = '\0';
+    build_packet(&pkt, seq_num, ack_num, last, ack, 1000, file_content);
+    sendto(send_sockfd, &pkt, len(pkt), 0, &server_addr_to, len(server_addr_to));
     delay(1000);
 
     fread(file_content, file_size, 1, fp);
     file_content[file_size] = '\0';
-    build_packet(&pkt, 1000, 0, 0, 0, 1000, file_content);
-    delay(1000);
-
-    fread(file_content, file_size, 1, fp);
-    file_content[file_size] = '\0';
-    build_packet(&pkt, 2000, 0, 0, 0, 1000, file_content);
+    build_packet(&pkt, seq_num, ack_num, last, ack, 1000, file_content);
+    sendto(send_sockfd, &pkt, len(pkt), 0, &server_addr_to, len(server_addr_to));
 
  
     
