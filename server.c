@@ -54,7 +54,7 @@ int main() {
     FILE *fp = fopen("output.txt", "wb");
 
     // TODO: Receive file from the client and save it as output.txt
-    while ((bytes_recv = recvfrom(listen_sockfd, &buffer, 1200, 0, (struct sockaddr *)&client_addr_from, sizeof(client_addr_from))) > 0) {
+    while ((bytes_recv = recvfrom(listen_sockfd, &buffer, 1200, 0, (struct sockaddr *)&client_addr_from, (unsigned int *)sizeof(client_addr_from))) > 0) {
         fwrite(buffer.payload, PAYLOAD_SIZE, 1, fp);
     }
         
