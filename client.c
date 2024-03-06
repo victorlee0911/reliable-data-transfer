@@ -71,6 +71,23 @@ int main(int argc, char *argv[]) {
     }
 
     // TODO: Read from file, and initiate reliable data transfer to the server
+    //fseek(fp, 0L, SEEK_END);
+    long int file_size = 1000;
+    char *file_content = (char*)malloc(file_size+1);
+    // fseek(fp, 0, SEEK_SET);
+    fread(file_content, file_size, 1, fp);
+    file_content[file_size] = '\0';
+    build_packet(&pkt, 0, 0, 0, 0, 1000, file_content);
+    delay(1000);
+
+    fread(file_content, file_size, 1, fp);
+    file_content[file_size] = '\0';
+    build_packet(&pkt, 1000, 0, 0, 0, 1000, file_content);
+    delay(1000);
+
+    fread(file_content, file_size, 1, fp);
+    file_content[file_size] = '\0';
+    build_packet(&pkt, 2000, 0, 0, 0, 1000, file_content);
 
  
     

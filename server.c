@@ -15,6 +15,7 @@ int main() {
     int recv_len;
     struct packet ack_pkt;
 
+
     // Create a UDP socket for sending
     send_sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (send_sockfd < 0) {
@@ -52,8 +53,10 @@ int main() {
     FILE *fp = fopen("output.txt", "wb");
 
     // TODO: Receive file from the client and save it as output.txt
+    // while ((bytes_recv = recvfrom(listen_sockfd, buffer, sizeof(buffer)-1, 0, )) > 0) {
 
-    
+    // }
+        
 
     fclose(fp);
     close(listen_sockfd);
