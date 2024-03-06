@@ -88,6 +88,7 @@ int main(int argc, char *argv[]) {
     sendto(send_sockfd, &pkt, sizeof(pkt), 0, (struct sockaddr *)&server_addr_to, sizeof(server_addr_to));
     usleep(1000);
 
+    seq_num += PAYLOAD_SIZE;
     fread(file_content, file_size, 1, fp);
     file_content[file_size] = '\0';
     build_packet(&pkt, seq_num, ack_num, last, ack, PAYLOAD_SIZE, file_content);
