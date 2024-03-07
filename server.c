@@ -56,21 +56,24 @@ int main() {
     // TODO: Receive file from the client and save it as output.txt
 
     printf("listening");
+
+    // Configure dlient addr from
+
+    memset(&client_addr_from, 0, sizeof(client_addr_from));
+    client_addr_from.sin_family = AF_INET;
+    client_addr_from.sin_addr.s_addr = inet_addr(LOCAL_HOST);
+    client_addr_from.sin_port = htons(SERVER_PORT);
+
     while(1){
-        while((bytes_recv = recvfrom(listen_sockfd, &buffer, 1200, 0, (struct sockaddr *)&client_addr_from, (unsigned int *)sizeof(client_addr_from)) > 0)){
-            printf("recv packet");
-            fwrite(buffer.payload, PAYLOAD_SIZE, 1, fp);
-            printf(buffer.payload);
-            if (buffer.last == 1){
-                printf("closes");
-                fclose(fp);
-                close(listen_sockfd);
-                close(send_sockfd);
-                return 0; 
-            }
+        if((bytes_recv = recv(listen_sockfd, &buffer, sizeof(buffer)-1, 0)) == -1) {
+            printf("error");
+            break;
         }
-        if (bytes_recv < 0){
-            perror("error receiving");
+        printf("recv packet");
+        fwrite(buffer.payload, PAYLOAD_SIZE, 1, fp);
+        if(buffer.last){
+            printf("finished packets");
+            break;
         }
     }
     

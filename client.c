@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
     if(sendto(send_sockfd, &pkt, sizeof(pkt), 0, (struct sockaddr *)&server_addr_to, sizeof(server_addr_to)) < 0){
         printf("send error");
     }
-    printf(file_content);
+    printf("%s",file_content);
     usleep(1000);
 
     seq_num += PAYLOAD_SIZE;
@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
     if(sendto(send_sockfd, &pkt, sizeof(pkt), 0, (struct sockaddr *)&server_addr_to, sizeof(server_addr_to)) < 0){
         printf("send error");
     }
-    printf(file_content);
+    printf("%s",file_content);
     usleep(1000);
 
     seq_num += PAYLOAD_SIZE;
@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
     if(sendto(send_sockfd, &pkt, sizeof(pkt), 0, (struct sockaddr *)&server_addr_to, sizeof(server_addr_to)) < 0){
         printf("send error");
     }
-    printf(file_content);
+    printf("%s",file_content);
  
     
     fclose(fp);

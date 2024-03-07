@@ -68,7 +68,7 @@ def producer(bucket, listen_port):
             if len(data) > 1200:
                 # drop oversized packets
                 continue
-            # print(f'Packet received: {data}')
+            print(f'Packet received: {data}')
             success = bucket.enqueue(data)
             # if success:
             #     print(f'Packet enqueued: {data}, queue size: {bucket.q.qsize()}')
@@ -102,6 +102,7 @@ def forward_packets(listen_port, forward_port, test_type):
                     continue
                 if tunnel.forward_success():
                     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as forward_socket:
+                        print(f'Packet sent to port {forward_port}')
                         forward_socket.sendto(data, ('localhost', forward_port))
                 else:
                     print(f'Packet dropped on port {listen_port}')
