@@ -12,7 +12,7 @@ int main() {
     struct packet buffer;
     socklen_t addr_size = sizeof(client_addr_from);
     int expected_seq_num = 0;
-    int recv_len;
+    //int recv_len;
     struct packet ack_pkt;
 
     int bytes_recv;
@@ -63,12 +63,31 @@ int main() {
             printf("error");
             break;
         }
+        //received a packet -> send an ack
 
-        fwrite(buffer.payload, buffer.length, 1, fp);
-        if(buffer.last){
-            printf("finished packets");
-            break;
+        //check if correct seq has been received
+        if(expected_seq_num == buffer.seqnum){
+            expected_seq_num = expected_seq_num + buffer.length;
+            build_packet(&ack_pkt, 0, expected_seq_num, buffer.last, 1, 0, 0);
+            if(sendto(send_sockfd, &ack_pkt, sizeof(ack_pkt), 0, (struct sockaddr *)&client_addr_to, sizeof(client_addr_to)) < 0){
+                perror("ack send error");
+            }
+            printRecv(&buffer);
+            printSend(&ack_pkt, 0);
+            fwrite(buffer.payload, buffer.length, 1, fp);
+            //
+            if(buffer.last){
+                printf("finished packets");
+                break;
+            }
+        } else {    // repeat packet received
+            if(sendto(send_sockfd, &ack_pkt, sizeof(ack_pkt), 0, (struct sockaddr *)&client_addr_to, sizeof(client_addr_to)) < 0){
+                perror("ack send error");
+            }
+            printRecv(&buffer);
+            printSend(&ack_pkt, 1);
         }
+        
     }
     
 

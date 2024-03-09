@@ -92,42 +92,19 @@ int main(int argc, char *argv[]) {
         }
         //printf("%s\n%d\n%d\n",file_content, bytes_send, last);
         seq_num += bytes_send;
+        //printf("seq_num: %d", seq_num);
         usleep(1000);
+        printSend(&pkt, 0);
+        
+        if((recv(listen_sockfd, &ack_pkt, sizeof(ack_pkt)-1, 0)) == -1) {
+            printf("error");
+            break;
+        }
+        printRecv(&ack_pkt);
+        if(ack_pkt.acknum != seq_num){
+            printf("wrong ack received");
+        }
     }
-
-
-    // //fseek(fp, 0L, SEEK_END);
-    // long int file_size = PAYLOAD_SIZE;
-    // char *file_content = (char*)malloc(file_size+1);
-    // // fseek(fp, 0, SEEK_SET);
-    // fread(file_content, file_size, 1, fp);
-    // file_content[file_size] = '\0';
-    // build_packet(&pkt, seq_num, ack_num, last, ack, PAYLOAD_SIZE, file_content);
-    // if(sendto(send_sockfd, &pkt, sizeof(pkt), 0, (struct sockaddr *)&server_addr_to, sizeof(server_addr_to)) < 0){
-    //     printf("send error");
-    // }
-    // printf("%s",file_content);
-    // usleep(1000);
-
-    // seq_num += PAYLOAD_SIZE;
-    // fread(file_content, file_size, 1, fp);
-    // file_content[file_size] = '\0';
-    // build_packet(&pkt, seq_num, ack_num, last, ack, PAYLOAD_SIZE, file_content);
-    // if(sendto(send_sockfd, &pkt, sizeof(pkt), 0, (struct sockaddr *)&server_addr_to, sizeof(server_addr_to)) < 0){
-    //     printf("send error");
-    // }
-    // printf("%s",file_content);
-    // usleep(1000);
-
-    // seq_num += PAYLOAD_SIZE;
-    // last = 1;
-    // fread(file_content, file_size, 1, fp);
-    // file_content[file_size] = '\0';
-    // build_packet(&pkt, seq_num, ack_num, last, ack, PAYLOAD_SIZE, file_content);
-    // if(sendto(send_sockfd, &pkt, sizeof(pkt), 0, (struct sockaddr *)&server_addr_to, sizeof(server_addr_to)) < 0){
-    //     printf("send error");
-    // }
-    // printf("%s",file_content);
  
     
     fclose(fp);
