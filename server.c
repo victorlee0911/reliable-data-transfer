@@ -69,8 +69,12 @@ int main() {
             printf("error");
             break;
         }
+
+        char *payload;
+        payload = malloc(sizeof(char) * strlen(buffer.payload));
+        strncpy(payload, buffer.payload, strlen(buffer.payload));
         printf("recv packet");
-        fwrite(buffer.payload, PAYLOAD_SIZE, 1, fp);
+        fwrite(payload, strlen(buffer.payload), 1, fp);
         if(buffer.last){
             printf("finished packets");
             break;
