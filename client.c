@@ -73,18 +73,19 @@ int main(int argc, char *argv[]) {
 
     // TODO: Read from file, and initiate reliable data transfer to the server
 
+    //struct to handle poll()
     struct pollfd pfds[1];
     pfds[0].fd = listen_sockfd;
     pfds[0].events = POLLIN;
 
-
+    //reading in file
     fseek(fp, 0L, SEEK_END);
     long int file_size = ftell(fp);
     char *file_content = (char*)malloc(file_size+1);
     fseek(fp, 0, SEEK_SET);
-    while(seq_num < file_size){
+    while(seq_num < file_size){                         //while there is more to read
         int bytes_send = PAYLOAD_SIZE-1;
-        if(seq_num + bytes_send >= file_size){
+        if(seq_num + bytes_send >= file_size){          //last packet sends less bytes
             bytes_send = file_size - seq_num;
             last = 1;
         }
@@ -96,28 +97,28 @@ int main(int argc, char *argv[]) {
         if(sendto(send_sockfd, &pkt, sizeof(pkt), 0, (struct sockaddr *)&server_addr_to, sizeof(server_addr_to)) < 0){
             perror("send error");
         }
-        //printf("%s\n%d\n%d\n",file_content, bytes_send, last);
-        seq_num += bytes_send;
-        //printf("seq_num: %d", seq_num);
+        seq_num += bytes_send;                          //updating sequence number
         printSend(&pkt, 0);
 
-        int events = poll(pfds, 1, 0.4);
-
-        if(events == 0){
-            //time out -> retransmit
-            printSend(&pkt, 1);
-            if(sendto(send_sockfd, &pkt, sizeof(pkt), 0, (struct sockaddr *)&server_addr_to, sizeof(server_addr_to)) < 0){
-                perror("send error");
-            } 
-        } else {
-            if((recv(listen_sockfd, &ack_pkt, sizeof(ack_pkt)-1, 0)) == -1) {
-                printf("error");
+        while(1){
+            int events = poll(pfds, 1, 400);            //poll sleeps program until socket receives a packet or 400ms timeout triggers
+            if(events == 0){                            //no packets received... aka timeout triggered
+                //time out -> retransmit
+                printSend(&pkt, 1);
+                if(sendto(send_sockfd, &pkt, sizeof(pkt), 0, (struct sockaddr *)&server_addr_to, sizeof(server_addr_to)) < 0){      
+                    perror("send error");
+                } 
+            } else {
                 break;
             }
-            printRecv(&ack_pkt);
-            if(ack_pkt.acknum != seq_num){
-                printf("wrong ack received");
-            }
+        }
+        if((recv(listen_sockfd, &ack_pkt, sizeof(ack_pkt)-1, 0)) == -1) {       
+            printf("error");
+            break;
+        }
+        printRecv(&ack_pkt);
+        if(ack_pkt.acknum != seq_num){
+            printf("wrong ack received");
         }
     }
  
