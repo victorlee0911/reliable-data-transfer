@@ -57,12 +57,6 @@ int main() {
 
     printf("listening");
 
-    // Configure dlient addr from
-
-    memset(&client_addr_from, 0, sizeof(client_addr_from));
-    client_addr_from.sin_family = AF_INET;
-    client_addr_from.sin_addr.s_addr = inet_addr(LOCAL_HOST);
-    client_addr_from.sin_port = htons(SERVER_PORT);
 
     while(1){
         if((bytes_recv = recv(listen_sockfd, &buffer, sizeof(buffer)-1, 0)) == -1) {
@@ -70,11 +64,7 @@ int main() {
             break;
         }
 
-        char *payload;
-        payload = malloc(sizeof(char) * strlen(buffer.payload));
-        strncpy(payload, buffer.payload, strlen(buffer.payload));
-        printf("recv packet");
-        fwrite(payload, strlen(buffer.payload), 1, fp);
+        fwrite(buffer.payload, buffer.length, 1, fp);
         if(buffer.last){
             printf("finished packets");
             break;
