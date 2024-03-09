@@ -4,6 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
+#include <poll.h>
 
 #include "utils.h"
 
@@ -72,6 +73,11 @@ int main(int argc, char *argv[]) {
 
     // TODO: Read from file, and initiate reliable data transfer to the server
 
+    struct pollfd pfds[1];
+    pfds[0].fd = listen_sockfd;
+    pfds[0].events = POLLIN;
+
+
     fseek(fp, 0L, SEEK_END);
     long int file_size = ftell(fp);
     char *file_content = (char*)malloc(file_size+1);
@@ -93,16 +99,25 @@ int main(int argc, char *argv[]) {
         //printf("%s\n%d\n%d\n",file_content, bytes_send, last);
         seq_num += bytes_send;
         //printf("seq_num: %d", seq_num);
-        usleep(1000);
         printSend(&pkt, 0);
-        
-        if((recv(listen_sockfd, &ack_pkt, sizeof(ack_pkt)-1, 0)) == -1) {
-            printf("error");
-            break;
-        }
-        printRecv(&ack_pkt);
-        if(ack_pkt.acknum != seq_num){
-            printf("wrong ack received");
+
+        int events = poll(pfds, 1, 0.4);
+
+        if(events == 0){
+            //time out -> retransmit
+            printSend(&pkt, 1);
+            if(sendto(send_sockfd, &pkt, sizeof(pkt), 0, (struct sockaddr *)&server_addr_to, sizeof(server_addr_to)) < 0){
+                perror("send error");
+            } 
+        } else {
+            if((recv(listen_sockfd, &ack_pkt, sizeof(ack_pkt)-1, 0)) == -1) {
+                printf("error");
+                break;
+            }
+            printRecv(&ack_pkt);
+            if(ack_pkt.acknum != seq_num){
+                printf("wrong ack received");
+            }
         }
     }
  
