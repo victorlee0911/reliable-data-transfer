@@ -72,7 +72,7 @@ int main() {
 
         //check if correct seq has been received
         if(expected_seq_num == buffer.seqnum){          // expected seq num came
-            expected_seq_num = expected_seq_num + buffer.length;
+            expected_seq_num = (expected_seq_num + buffer.length) % 40000;
             build_packet(&ack_pkt, 0, expected_seq_num, buffer.last, 1, 0, 0);  // build ack packet
             if(sendto(send_sockfd, &ack_pkt, sizeof(ack_pkt), 0, (struct sockaddr *)&client_addr_to, sizeof(client_addr_to)) < 0){
                 perror("ack send error");

@@ -78,15 +78,20 @@ int main(int argc, char *argv[]) {
     pfds[0].fd = listen_sockfd;
     pfds[0].events = POLLIN;
 
+    int packets = 0;
+    long int bits_sent = 0;
+
     //reading in file
     fseek(fp, 0L, SEEK_END);
     long int file_size = ftell(fp);
     char *file_content = (char*)malloc(file_size+1);
     fseek(fp, 0, SEEK_SET);
-    while(seq_num < file_size){                         //while there is more to read
+
+    packets = file_size / PAYLOAD_SIZE;
+    while(bits_sent < file_size){                         //while there is more to read
         int bytes_send = PAYLOAD_SIZE-1;
-        if(seq_num + bytes_send >= file_size){          //last packet sends less bytes
-            bytes_send = file_size - seq_num;
+        if(bits_sent + bytes_send >= file_size){          //last packet sends less bytes
+            bytes_send = file_size - bits_sent;
             last = 1;
         }
         fread(file_content, bytes_send, 1, fp);
@@ -97,11 +102,13 @@ int main(int argc, char *argv[]) {
         if(sendto(send_sockfd, &pkt, sizeof(pkt), 0, (struct sockaddr *)&server_addr_to, sizeof(server_addr_to)) < 0){
             perror("send error");
         }
-        seq_num += bytes_send;                          //updating sequence number
+        bits_sent += bytes_send;
+        seq_num = (bits_sent) % 40000;                          //updating sequence number
         printSend(&pkt, 0);
+        printf("%d", packets--);
 
         while(1){
-            int events = poll(pfds, 1, 400);            //poll sleeps program until socket receives a packet or 400ms timeout triggers
+            int events = poll(pfds, 1, 300);            //poll sleeps program until socket receives a packet or 400ms timeout triggers
             if(events == 0){                            //no packets received... aka timeout triggered
                 //time out -> retransmit
                 printSend(&pkt, 1);
