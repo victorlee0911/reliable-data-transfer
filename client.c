@@ -148,13 +148,13 @@ int main(int argc, char *argv[]) {
                 close(send_sockfd);
                 return 0;
             }
-            if ((base*(PAYLOAD_SIZE-1) % 40000) > ack_pkt.acknum){
+            if ((base*(PAYLOAD_SIZE-1) % 40000) > ack_pkt.acknum + 20000){
                 num_seq_wrap += 1;
             }
 
             if(ack_pkt.acknum + (num_seq_wrap * 40000) >= base * (PAYLOAD_SIZE - 1)){
                 base = ((ack_pkt.acknum + (num_seq_wrap * 40000)) / (PAYLOAD_SIZE - 1));
-                printf("updated base: %d\n", base);
+                printf("updated base: %d\n seqwrap ", base);
                 if (cwind < max_window){
                     cwind += 1;
                 }
@@ -185,15 +185,18 @@ int main(int argc, char *argv[]) {
         long milliseconds = (tv_curr.tv_sec - tv_start.tv_sec) * 1000L;
         milliseconds += (tv_curr.tv_usec - tv_start.tv_usec) / 1000L;
 
-        if(milliseconds >= 250){    //timeout
+        if(milliseconds >= 110){    //timeout
             printf("\nTIMEOUT\n");
             bits_sent = base*(PAYLOAD_SIZE - 1);
             seq_num = bits_sent % 40000;
             next_pkt = base;
             last = 0;
             cwind = (cwind / 2) + 1;
+            if(cwind < 5){
+                cwind = 5;
+            }
         }
-        usleep(1000);
+        usleep(10000);
         // while(1){
         //     int events = poll(pfds, 1, 300);            //poll sleeps program until socket receives a packet or 400ms timeout triggers
         //     if(events == 0){                            //no packets received... aka timeout triggered

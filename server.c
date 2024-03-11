@@ -60,6 +60,8 @@ int main() {
     pfds[0].fd = listen_sockfd;
     pfds[0].events = POLLIN;
 
+    int complete = 0;
+
     printf("listening");
 
     build_packet(&ack_pkt, 0, 0, 0, 1, 0, 0);
@@ -73,6 +75,7 @@ int main() {
         //check if correct seq has been received
         if(expected_seq_num == buffer.seqnum){          // expected seq num came
             printf("expseqnum: %d \n buffer len: %d \n", expected_seq_num, buffer.length);
+            complete = buffer.last;
             expected_seq_num = (expected_seq_num + buffer.length) % 40000;
             build_packet(&ack_pkt, 0, expected_seq_num, buffer.last, 1, 0, 0);  // build ack packet
             if(sendto(send_sockfd, &ack_pkt, sizeof(ack_pkt), 0, (struct sockaddr *)&client_addr_to, sizeof(client_addr_to)) < 0){
@@ -82,28 +85,20 @@ int main() {
             printSend(&ack_pkt, 0);
             //printf("\nwriting to buffer: %d\n\n%s\n\n", buffer.seqnum, buffer.payload);
             fwrite(buffer.payload, buffer.length, 1, fp);   //write payload to output.txt
-            if(buffer.last){            // preparing to close down server bc Last flag received
-            //keep open in case of another receive
-                int events = poll(pfds, 1, 5000);       // keep server open for a while to check if client is still sending packets
-                if (events == 0){                       // no packets received -> assumed client closed -> close server
-                    printf("finished packets");
-                    break;
-                }                                       // else retransmit last ack packet
-            }
         } else {                                        // repeat packet received
             if(sendto(send_sockfd, &ack_pkt, sizeof(ack_pkt), 0, (struct sockaddr *)&client_addr_to, sizeof(client_addr_to)) < 0){
                 perror("ack send error");
             }
             printSend(&ack_pkt, 1);
+        } 
 
-            if(buffer.last){            // preparing to close down server bc Last flag received
-            //keep open in case of another receive
-                int events = poll(pfds, 1, 5000);       // keep server open for a while to check if client is still sending packets
-                if (events == 0){                       // no packets received -> assumed client closed -> close server
-                    printf("finished packets");
-                    break;
-                }                                       // else retransmit last ack packet
-            }
+        if(complete){            // preparing to close down server bc Last flag received
+        //keep open in case of another receive
+            int events = poll(pfds, 1, 3000);       // keep server open for a while to check if client is still sending packets
+            if (events == 0){                       // no packets received -> assumed client closed -> close server
+                printf("finished packets");
+                break;
+            }                                       // else retransmit last ack packet
         }
         
     }
