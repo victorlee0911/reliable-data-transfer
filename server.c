@@ -61,6 +61,7 @@ int main() {
     pfds[0].events = POLLIN;
 
     int complete = 0;
+    
 
     printf("listening");
 
@@ -76,9 +77,9 @@ int main() {
         if(expected_seq_num == buffer.seqnum){          // expected seq num came
             printf("expseqnum: %d \n buffer len: %d \n", expected_seq_num, buffer.length);
             complete = buffer.last;
-            expected_seq_num = expected_seq_num + buffer.length;
+            expected_seq_num += 1;
 
-            printf("\nwriting to buffer: %d\n\n%s\n\n", buffer.seqnum, buffer.payload);
+            //printf("\nwriting to buffer: %d\n\n%s\n\n", buffer.seqnum, buffer.payload);
             fwrite(buffer.payload, buffer.length, 1, fp);   //write payload to output.txt
             
             build_packet(&ack_pkt, 0, expected_seq_num, buffer.last, 1, 0, 0);  // build ack packet

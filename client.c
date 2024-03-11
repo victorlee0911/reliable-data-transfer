@@ -102,8 +102,8 @@ int main(int argc, char *argv[]) {
         //printf("\nnxtpkt: %d \n base: %d \n cwind: %d \n", next_pkt, base, cwind);
         if (next_pkt < base + cwind){
             int bytes_send = PAYLOAD_SIZE-1;
-            if(seq_num + bytes_send >= file_size){          //last packet sends less bytes
-                bytes_send = file_size - seq_num;
+            if(next_pkt * (PAYLOAD_SIZE-1) + bytes_send >= file_size){          //last packet sends less bytes
+                bytes_send = file_size - next_pkt * (PAYLOAD_SIZE-1);
                 last = 1;
             }
             fseek(fp, next_pkt * (PAYLOAD_SIZE-1), SEEK_SET);
@@ -111,13 +111,13 @@ int main(int argc, char *argv[]) {
             if(last){
                 file_content[bytes_send] = '\0';
             }
-            build_packet(&pkt, seq_num, ack_num, last, ack, bytes_send, file_content);
+            build_packet(&pkt, next_pkt, ack_num, last, ack, bytes_send, file_content);
             if(sendto(send_sockfd, &pkt, sizeof(pkt), 0, (struct sockaddr *)&server_addr_to, sizeof(server_addr_to)) < 0){
                 perror("send error");
             }
             printf("Packet #%ld\n %s\n\n", next_pkt, file_content);
 
-            seq_num += bytes_send;                        //updating sequence number
+                      //updating sequence number
             printSend(&pkt, 0);
             //printf("\nTotal packets: %d\n", total_packets);
             if(base == next_pkt){
@@ -146,8 +146,8 @@ int main(int argc, char *argv[]) {
                 return 0;
             }
 
-            if(ack_pkt.acknum >= base * (PAYLOAD_SIZE - 1)){
-                base = ack_pkt.acknum/ (PAYLOAD_SIZE - 1);
+            if(ack_pkt.acknum >= base){
+                base = ack_pkt.acknum;
                 printf("updated base: %d\n seqwrap ", base);
                 if (cwind < max_window){
                     cwind += 1;
@@ -182,7 +182,6 @@ int main(int argc, char *argv[]) {
 
         if(milliseconds >= 110){    //timeout
             printf("\nTIMEOUT\n");
-            seq_num = base*(PAYLOAD_SIZE - 1);
             next_pkt = base;
             last = 0;
             cwind = (cwind / 2) + 1;
