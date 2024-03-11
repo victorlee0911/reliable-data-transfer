@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
         if(base + cwind > total_packets){
             cwind = total_packets - base;
         }
-        printf("nxtpkt: %d \n base: %d \n cwind: %d \n", next_pkt, base, cwind);
+        printf("\nnxtpkt: %d \n base: %d \n cwind: %d \n", next_pkt, base, cwind);
         if (next_pkt < base + cwind){
             int bytes_send = PAYLOAD_SIZE-1;
             if(bits_sent + bytes_send >= file_size){          //last packet sends less bytes
@@ -116,7 +116,7 @@ int main(int argc, char *argv[]) {
             bits_sent += bytes_send;
             seq_num = (bits_sent) % 40000;                          //updating sequence number
             printSend(&pkt, 0);
-            printf("%d", total_packets);
+            printf("\nTotal packets: %d\n", total_packets);
             if(base == next_pkt){
                 //start_timer
                 gettimeofday(&tv_start, 0);
@@ -144,7 +144,7 @@ int main(int argc, char *argv[]) {
 
             if(ack_pkt.acknum >= base * (PAYLOAD_SIZE - 1)){
                 base = (ack_pkt.acknum / (PAYLOAD_SIZE - 1));
-                printf("updated base: %d", base);
+                printf("updated base: %d\n", base);
             }
             if(next_pkt < base){
                 next_pkt = base;
@@ -162,9 +162,11 @@ int main(int argc, char *argv[]) {
         milliseconds += (tv_curr.tv_usec - tv_start.tv_usec) / 1000L;
 
         if(milliseconds >= 300){    //timeout
-           bits_sent = base*(PAYLOAD_SIZE - 1);
-           seq_num = bits_sent % 40000;
-           next_pkt = base;
+            printf("\nTIMEOUT\n");
+            bits_sent = base*(PAYLOAD_SIZE - 1);
+            seq_num = bits_sent % 40000;
+            next_pkt = base;
+            last = 0;
         }
         usleep(40000);
         // while(1){
