@@ -80,7 +80,7 @@ int main() {
             }
             
             printSend(&ack_pkt, 0);
-            printf("\nwriting to buffer: %d\n\n%s\n\n", buffer.seqnum, buffer.payload);
+            //printf("\nwriting to buffer: %d\n\n%s\n\n", buffer.seqnum, buffer.payload);
             fwrite(buffer.payload, buffer.length, 1, fp);   //write payload to output.txt
             if(buffer.last){            // preparing to close down server bc Last flag received
             //keep open in case of another receive

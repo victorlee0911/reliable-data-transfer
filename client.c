@@ -91,6 +91,7 @@ int main(int argc, char *argv[]) {
     int next_pkt = 0;
     int cwind = WINDOW_SIZE;
     long int bits_sent = 0;
+    int num_seq_wrap = 0;
 
     while(1){                         //while there is more to read
 
@@ -113,6 +114,8 @@ int main(int argc, char *argv[]) {
             if(sendto(send_sockfd, &pkt, sizeof(pkt), 0, (struct sockaddr *)&server_addr_to, sizeof(server_addr_to)) < 0){
                 perror("send error");
             }
+            //printf("Packet #%d\n %s\n\n", next_pkt, file_content);
+
             bits_sent += bytes_send;
             seq_num = (bits_sent) % 40000;                          //updating sequence number
             printSend(&pkt, 0);
@@ -142,9 +145,12 @@ int main(int argc, char *argv[]) {
                 close(send_sockfd);
                 return 0;
             }
+            if ((base*(PAYLOAD_SIZE-1) % 40000) > ack_pkt.acknum){
+                num_seq_wrap += 1;
+            }
 
-            if(ack_pkt.acknum >= base * (PAYLOAD_SIZE - 1)){
-                base = (ack_pkt.acknum / (PAYLOAD_SIZE - 1));
+            if(ack_pkt.acknum + (num_seq_wrap * 40000) >= base * (PAYLOAD_SIZE - 1)){
+                base = ((ack_pkt.acknum + (num_seq_wrap * 40000)) / (PAYLOAD_SIZE - 1));
                 printf("updated base: %d\n", base);
             }
             if(next_pkt < base){
@@ -171,7 +177,7 @@ int main(int argc, char *argv[]) {
             last = 0;
             cwind = WINDOW_SIZE;
         }
-        usleep(40000);
+        usleep(30000);
         // while(1){
         //     int events = poll(pfds, 1, 300);            //poll sleeps program until socket receives a packet or 400ms timeout triggers
         //     if(events == 0){                            //no packets received... aka timeout triggered
