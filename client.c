@@ -92,6 +92,9 @@ int main(int argc, char *argv[]) {
     int cwind = WINDOW_SIZE;
     long int bits_sent = 0;
     int num_seq_wrap = 0;
+    int max_window = 18;
+    int retransmit = 3;
+    short int prev_ack = -1;
 
     while(1){                         //while there is more to read
 
@@ -152,6 +155,19 @@ int main(int argc, char *argv[]) {
             if(ack_pkt.acknum + (num_seq_wrap * 40000) >= base * (PAYLOAD_SIZE - 1)){
                 base = ((ack_pkt.acknum + (num_seq_wrap * 40000)) / (PAYLOAD_SIZE - 1));
                 printf("updated base: %d\n", base);
+                if (cwind < max_window){
+                    cwind += 1;
+                }
+            } else if (prev_ack == ack_pkt.acknum){
+                retransmit -= 1;
+                if(retransmit == 0){
+                    bits_sent = base*(PAYLOAD_SIZE - 1);
+                    seq_num = bits_sent % 40000;
+                    next_pkt = base;
+                    last = 0;
+                }
+            } else {
+                prev_ack = ack_pkt.acknum;
             }
             if(next_pkt < base){
                 next_pkt = base;
@@ -175,9 +191,9 @@ int main(int argc, char *argv[]) {
             seq_num = bits_sent % 40000;
             next_pkt = base;
             last = 0;
-            cwind = WINDOW_SIZE;
+            cwind = (cwind / 2) + 1;
         }
-        usleep(30000);
+        usleep(60000);
         // while(1){
         //     int events = poll(pfds, 1, 300);            //poll sleeps program until socket receives a packet or 400ms timeout triggers
         //     if(events == 0){                            //no packets received... aka timeout triggered
