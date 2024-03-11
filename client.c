@@ -124,6 +124,7 @@ int main(int argc, char *argv[]) {
             next_pkt += 1;
         }
         
+        // searching for acks
         int events = poll(pfds, 1, 50);
         while(events != 0){
             if(events == -1){
@@ -157,6 +158,7 @@ int main(int argc, char *argv[]) {
             // }
         }
 
+        //timeout
         gettimeofday(&tv_curr, 0);
         long milliseconds = (tv_curr.tv_sec - tv_start.tv_sec) * 1000L;
         milliseconds += (tv_curr.tv_usec - tv_start.tv_usec) / 1000L;
@@ -165,6 +167,7 @@ int main(int argc, char *argv[]) {
            bits_sent = base*(PAYLOAD_SIZE - 1);
            seq_num = bits_sent % 40000;
            next_pkt = base;
+           cwind = WINDOW_SIZE;
         }
         usleep(40000);
         // while(1){

@@ -84,17 +84,26 @@ int main() {
             fwrite(buffer.payload, buffer.length, 1, fp);   //write payload to output.txt
             if(buffer.last){            // preparing to close down server bc Last flag received
             //keep open in case of another receive
-            int events = poll(pfds, 1, 5000);       // keep server open for a while to check if client is still sending packets
-            if (events == 0){                       // no packets received -> assumed client closed -> close server
-                printf("finished packets");
-                break;
-            }                                       // else retransmit last ack packet
-        }
+                int events = poll(pfds, 1, 5000);       // keep server open for a while to check if client is still sending packets
+                if (events == 0){                       // no packets received -> assumed client closed -> close server
+                    printf("finished packets");
+                    break;
+                }                                       // else retransmit last ack packet
+            }
         } else {                                        // repeat packet received
             if(sendto(send_sockfd, &ack_pkt, sizeof(ack_pkt), 0, (struct sockaddr *)&client_addr_to, sizeof(client_addr_to)) < 0){
                 perror("ack send error");
             }
             printSend(&ack_pkt, 1);
+
+            if(buffer.last){            // preparing to close down server bc Last flag received
+            //keep open in case of another receive
+                int events = poll(pfds, 1, 5000);       // keep server open for a while to check if client is still sending packets
+                if (events == 0){                       // no packets received -> assumed client closed -> close server
+                    printf("finished packets");
+                    break;
+                }                                       // else retransmit last ack packet
+            }
         }
         
     }
