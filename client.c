@@ -152,27 +152,23 @@ int main(int argc, char *argv[]) {
                 if (cwind < max_window){
                     cwind += 1;
                 }
+            } else if (prev_ack == ack_pkt.acknum){
+                retransmit -= 1;
+                if(retransmit == 0){
+                    seq_num = base*(PAYLOAD_SIZE - 1);
+                    next_pkt = base;
+                    last = 0;
+                    retransmit = 3;
+                }
+            } else {
+                prev_ack = ack_pkt.acknum;
             }
-            // } else if (prev_ack == ack_pkt.acknum){
-            //     retransmit -= 1;
-            //     if(retransmit == 0){
-            //         seq_num = base*(PAYLOAD_SIZE - 1);
-            //         next_pkt = base;
-            //         last = 0;
-            //         retransmit = 3;
-            //     }
-            // } else {
-            //     prev_ack = ack_pkt.acknum;
-            // }
             if(next_pkt < base){
                 next_pkt = base;
             }
             gettimeofday(&tv_start, 0);
             events = poll(pfds, 1, 0);
-            
-            // if(ack_pkt.acknum != seq_num){
-            //     printf("wrong ack received");
-            // }
+
         }
 
         //timeout
@@ -190,26 +186,7 @@ int main(int argc, char *argv[]) {
             }
         }
         usleep(10000);
-        // while(1){
-        //     int events = poll(pfds, 1, 300);            //poll sleeps program until socket receives a packet or 400ms timeout triggers
-        //     if(events == 0){                            //no packets received... aka timeout triggered
-        //         //time out -> retransmit
-        //         printSend(&pkt, 1);
-        //         if(sendto(send_sockfd, &pkt, sizeof(pkt), 0, (struct sockaddr *)&server_addr_to, sizeof(server_addr_to)) < 0){      
-        //             perror("send error");
-        //         } 
-        //     } else {
-        //         break;
-        //     }
-        // }
-        // if((recv(listen_sockfd, &ack_pkt, sizeof(ack_pkt)-1, 0)) == -1) {       
-        //     printf("error");
-        //     break;
-        // }
-        // printRecv(&ack_pkt);
-        // if(ack_pkt.acknum != seq_num){
-        //     printf("wrong ack received");
-        // }
+
     }
  
     
