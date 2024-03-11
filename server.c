@@ -12,7 +12,7 @@ int main() {
     struct sockaddr_in server_addr, client_addr_from, client_addr_to;
     struct packet buffer;
     socklen_t addr_size = sizeof(client_addr_from);
-    long int expected_seq_num = 0;
+    int expected_seq_num = 0;
     //int recv_len;
     struct packet ack_pkt;
 
@@ -64,7 +64,7 @@ int main() {
 
     printf("listening");
 
-    build_packet(&ack_pkt, 0, -1, 0, 1, 0, 0);
+    build_packet(&ack_pkt, 0, 0, 0, 1, 0, 0);
     while(1){
         if((bytes_recv = recv(listen_sockfd, &buffer, sizeof(buffer)-1, 0)) == -1) {
             printf("error");
@@ -76,15 +76,14 @@ int main() {
         if(expected_seq_num == buffer.seqnum){          // expected seq num came
             printf("expseqnum: %d \n buffer len: %d \n", expected_seq_num, buffer.length);
             complete = buffer.last;
-            expected_seq_num = (expected_seq_num + buffer.length) % 40000;
-            
+            expected_seq_num += 1;
             build_packet(&ack_pkt, 0, expected_seq_num, buffer.last, 1, 0, 0);  // build ack packet
             if(sendto(send_sockfd, &ack_pkt, sizeof(ack_pkt), 0, (struct sockaddr *)&client_addr_to, sizeof(client_addr_to)) < 0){
                 perror("ack send error");
             }
             
             printSend(&ack_pkt, 0);
-            printf("\nwriting to buffer: %d\n\n%s\n\n", buffer.seqnum, buffer.payload);
+            //printf("\nwriting to buffer: %d\n\n%s\n\n", buffer.seqnum, buffer.payload);
             fwrite(buffer.payload, buffer.length, 1, fp);   //write payload to output.txt
         } else {                                        // repeat packet received
             if(sendto(send_sockfd, &ack_pkt, sizeof(ack_pkt), 0, (struct sockaddr *)&client_addr_to, sizeof(client_addr_to)) < 0){

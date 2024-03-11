@@ -91,7 +91,6 @@ int main(int argc, char *argv[]) {
     int next_pkt = 0;
     int cwind = WINDOW_SIZE;
     long int bits_sent = 0;
-    int num_seq_wrap = 0;
     int max_window = 18;
     int retransmit = 3;
     short int prev_ack = -1;
@@ -120,8 +119,7 @@ int main(int argc, char *argv[]) {
             //printf("Packet #%d\n %s\n\n", next_pkt, file_content);
 
             bits_sent += bytes_send;
-            seq_num = (bits_sent) % 40000;                          //updating sequence number
-            printSend(&pkt, 0);
+            seq_num += 1;
             //printf("\nTotal packets: %d\n", total_packets);
             if(base == next_pkt){
                 //start_timer
@@ -148,12 +146,9 @@ int main(int argc, char *argv[]) {
                 close(send_sockfd);
                 return 0;
             }
-            if ((base*(PAYLOAD_SIZE-1) % 40000) > ack_pkt.acknum + 20000){
-                num_seq_wrap += 1;
-            }
 
-            if(ack_pkt.acknum + (num_seq_wrap * 40000) >= base * (PAYLOAD_SIZE - 1)){
-                base = ((ack_pkt.acknum + (num_seq_wrap * 40000)) / (PAYLOAD_SIZE - 1));
+            if(ack_pkt.acknum >= base){
+                base = ack_pkt.acknum;
                 printf("updated base: %d\n seqwrap ", base);
                 if (cwind < max_window){
                     cwind += 1;
@@ -162,7 +157,7 @@ int main(int argc, char *argv[]) {
                 retransmit -= 1;
                 if(retransmit == 0){
                     bits_sent = base*(PAYLOAD_SIZE - 1);
-                    seq_num = bits_sent % 40000;
+                    seq_num = base;
                     next_pkt = base;
                     last = 0;
                 }
@@ -188,7 +183,7 @@ int main(int argc, char *argv[]) {
         if(milliseconds >= 110){    //timeout
             printf("\nTIMEOUT\n");
             bits_sent = base*(PAYLOAD_SIZE - 1);
-            seq_num = bits_sent % 40000;
+            seq_num = base;
             next_pkt = base;
             last = 0;
             cwind = (cwind / 2) + 1;
