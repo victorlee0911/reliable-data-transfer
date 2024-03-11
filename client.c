@@ -101,7 +101,7 @@ int main(int argc, char *argv[]) {
         if(base + cwind > total_packets){
             cwind = total_packets - base;
         }
-        printf("\nnxtpkt: %d \n base: %d \n cwind: %d \n", next_pkt, base, cwind);
+        //printf("\nnxtpkt: %d \n base: %d \n cwind: %d \n", next_pkt, base, cwind);
         if (next_pkt < base + cwind){
             int bytes_send = PAYLOAD_SIZE-1;
             if(bits_sent + bytes_send >= file_size){          //last packet sends less bytes
@@ -122,7 +122,7 @@ int main(int argc, char *argv[]) {
             bits_sent += bytes_send;
             seq_num = (bits_sent) % 40000;                          //updating sequence number
             printSend(&pkt, 0);
-            printf("\nTotal packets: %d\n", total_packets);
+            //printf("\nTotal packets: %d\n", total_packets);
             if(base == next_pkt){
                 //start_timer
                 gettimeofday(&tv_start, 0);
@@ -185,7 +185,7 @@ int main(int argc, char *argv[]) {
         long milliseconds = (tv_curr.tv_sec - tv_start.tv_sec) * 1000L;
         milliseconds += (tv_curr.tv_usec - tv_start.tv_usec) / 1000L;
 
-        if(milliseconds >= 300){    //timeout
+        if(milliseconds >= 250){    //timeout
             printf("\nTIMEOUT\n");
             bits_sent = base*(PAYLOAD_SIZE - 1);
             seq_num = bits_sent % 40000;
@@ -193,7 +193,7 @@ int main(int argc, char *argv[]) {
             last = 0;
             cwind = (cwind / 2) + 1;
         }
-        usleep(60000);
+        usleep(1000);
         // while(1){
         //     int events = poll(pfds, 1, 300);            //poll sleeps program until socket receives a packet or 400ms timeout triggers
         //     if(events == 0){                            //no packets received... aka timeout triggered
