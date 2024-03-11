@@ -61,7 +61,6 @@ int main() {
     pfds[0].events = POLLIN;
 
     int complete = 0;
-    
 
     printf("listening");
 
