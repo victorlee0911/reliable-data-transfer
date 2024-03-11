@@ -8,7 +8,6 @@
 
 #include "utils.h"
 
-
 int main(int argc, char *argv[]) {
     int listen_sockfd, send_sockfd;
     struct sockaddr_in client_addr, server_addr_to, server_addr_from;
@@ -17,8 +16,8 @@ int main(int argc, char *argv[]) {
     struct packet pkt;
     struct packet ack_pkt;
     char buffer[PAYLOAD_SIZE];
-    unsigned short seq_num = 0;
-    unsigned short ack_num = 0;
+    long int seq_num = 0;
+    long int ack_num = 0;
     char last = 0;
     char ack = 0;
 
@@ -79,7 +78,8 @@ int main(int argc, char *argv[]) {
     pfds[0].events = POLLIN;
 
     int packets = 0;
-    long int bits_sent = 0;
+    long int base = 0;
+    long int next_seq = 0;
 
     //reading in file
     fseek(fp, 0L, SEEK_END);
@@ -88,45 +88,87 @@ int main(int argc, char *argv[]) {
     fseek(fp, 0, SEEK_SET);
 
     packets = file_size / PAYLOAD_SIZE;
-    while(bits_sent < file_size){                         //while there is more to read
-        int bytes_send = PAYLOAD_SIZE-1;
-        if(bits_sent + bytes_send >= file_size){          //last packet sends less bytes
-            bytes_send = file_size - bits_sent;
-            last = 1;
-        }
-        fread(file_content, bytes_send, 1, fp);
-        if(last){
-            file_content[bytes_send] = '\0';
-        }
-        build_packet(&pkt, seq_num, ack_num, last, ack, bytes_send, file_content);
-        if(sendto(send_sockfd, &pkt, sizeof(pkt), 0, (struct sockaddr *)&server_addr_to, sizeof(server_addr_to)) < 0){
-            perror("send error");
-        }
-        bits_sent += bytes_send;
-        seq_num = (bits_sent) % 40000;                          //updating sequence number
-        printSend(&pkt, 0);
-        printf("%d", packets--);
+    while(seq_num < file_size){                         //while there is more to read
+        // int bytes_send = PAYLOAD_SIZE-1;
+        // if(seq_num + bytes_send >= file_size){          //last packet sends less bytes
+        //     bytes_send = file_size - seq_num;
+        //     last = 1;
+        // }
+        // fread(file_content, bytes_send, 1, fp);
+        // if(last){
+        //     file_content[bytes_send] = '\0';
+        // }
+        // build_packet(&pkt, seq_num, ack_num, last, ack, bytes_send, file_content);
+        // if(sendto(send_sockfd, &pkt, sizeof(pkt), 0, (struct sockaddr *)&server_addr_to, sizeof(server_addr_to)) < 0){
+        //     perror("send error");
+        // }
+        // seq_num += bytes_send;                        //updating sequence number
+        // printSend(&pkt, 0);
+        // printf("%d", packets--);
 
-        while(1){
-            int events = poll(pfds, 1, 300);            //poll sleeps program until socket receives a packet or 400ms timeout triggers
-            if(events == 0){                            //no packets received... aka timeout triggered
-                //time out -> retransmit
-                printSend(&pkt, 1);
-                if(sendto(send_sockfd, &pkt, sizeof(pkt), 0, (struct sockaddr *)&server_addr_to, sizeof(server_addr_to)) < 0){      
-                    perror("send error");
-                } 
-            } else {
-                break;
+        //TODO: REMOVE ABOVE
+        //TODO: BELOW GO_BACK_N
+
+         while(next_seq < base + WINDOW_SIZE){
+            int bytes_send = PAYLOAD_SIZE-1;
+            if(seq_num + bytes_send >= file_size){          //last packet sends less bytes
+                bytes_send = file_size - seq_num;
+                last = 1;
+            }
+            fread(file_content, bytes_send, 1, fp);
+            if(last){
+                file_content[bytes_send] = '\0';
+            }
+            seq_num += bytes_send;
+            build_packet(&pkt, seq_num, ack_num, last, ack, bytes_send, file_content);
+            if(sendto(send_sockfd, &pkt, sizeof(pkt), 0, (struct sockaddr *)&server_addr_to, sizeof(server_addr_to)) < 0){
+                perror("send error");
+            }
+            
+            if(base == next_seq){
+                //start_timer
+            }
+            next_seq += 1;
+         }
+
+        if((recv(listen_sockfd, &ack_pkt, sizeof(ack_pkt)-1, 0))){
+            if(ack_pkt.acknum > base * (PAYLOAD_SIZE - 1)){
+                base = (ack_pkt.ackum / (PAYLOAD_SIZE - 1));
+            }
+            if(next_seq < base){
+                next_seq = base;
+            }
+            if(base == next_seq){
+                //stop_timer
             }
         }
-        if((recv(listen_sockfd, &ack_pkt, sizeof(ack_pkt)-1, 0)) == -1) {       
-            printf("error");
-            break;
+
+        if(timeout){
+           seq_num = (next_seq-base)*(PAYLOAD_SIZE - 1);
+           next_seq = base;
         }
-        printRecv(&ack_pkt);
-        if(ack_pkt.acknum != seq_num){
-            printf("wrong ack received");
-        }
+        //TODO: REMOVE BELOW
+        // while(1){
+        //     int events = poll(pfds, 1, 300);            //poll sleeps program until socket receives a packet or 400ms timeout triggers
+        //     if(events == 0){                            //no packets received... aka timeout triggered
+        //         //time out -> retransmit
+        //         printSend(&pkt, 1);
+        //         if(sendto(send_sockfd, &pkt, sizeof(pkt), 0, (struct sockaddr *)&server_addr_to, sizeof(server_addr_to)) < 0){      
+        //             perror("send error");
+        //         } 
+        //     } else {
+        //         break;
+        //     }
+        // }
+        // if((recv(listen_sockfd, &ack_pkt, sizeof(ack_pkt)-1, 0)) == -1) {       
+        //     printf("error");
+        //     break;
+        // }
+        // printRecv(&ack_pkt);
+        // if(ack_pkt.acknum != seq_num){
+        //     printf("wrong ack received");
+        // }
+        //TODO: REMOVE ABOVE
     }
  
     

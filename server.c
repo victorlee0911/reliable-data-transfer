@@ -12,7 +12,7 @@ int main() {
     struct sockaddr_in server_addr, client_addr_from, client_addr_to;
     struct packet buffer;
     socklen_t addr_size = sizeof(client_addr_from);
-    int expected_seq_num = 0;
+    long int expected_seq_num = 0;
     //int recv_len;
     struct packet ack_pkt;
 
