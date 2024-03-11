@@ -76,7 +76,10 @@ int main() {
         if(expected_seq_num == buffer.seqnum){          // expected seq num came
             printf("expseqnum: %d \n buffer len: %d \n", expected_seq_num, buffer.length);
             complete = buffer.last;
-            expected_seq_num = (expected_seq_num + buffer.length) % 40000;
+            expected_seq_num = expected_seq_num + buffer.length;
+
+            printf("\nwriting to buffer: %d\n\n%s\n\n", buffer.seqnum, buffer.payload);
+            fwrite(buffer.payload, buffer.length, 1, fp);   //write payload to output.txt
             
             build_packet(&ack_pkt, 0, expected_seq_num, buffer.last, 1, 0, 0);  // build ack packet
             if(sendto(send_sockfd, &ack_pkt, sizeof(ack_pkt), 0, (struct sockaddr *)&client_addr_to, sizeof(client_addr_to)) < 0){
@@ -84,8 +87,7 @@ int main() {
             }
             
             printSend(&ack_pkt, 0);
-            printf("\nwriting to buffer: %d\n\n%s\n\n", buffer.seqnum, buffer.payload);
-            fwrite(buffer.payload, buffer.length, 1, fp);   //write payload to output.txt
+            
         } else {                                        // repeat packet received
             if(sendto(send_sockfd, &ack_pkt, sizeof(ack_pkt), 0, (struct sockaddr *)&client_addr_to, sizeof(client_addr_to)) < 0){
                 perror("ack send error");

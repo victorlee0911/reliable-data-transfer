@@ -19,8 +19,8 @@ int main(int argc, char *argv[]) {
     struct packet pkt;
     struct packet ack_pkt;
     char buffer[PAYLOAD_SIZE];
-    unsigned short seq_num = 0;
-    unsigned short ack_num = 0;
+    long int seq_num = 0;
+    long int ack_num = 0;
     char last = 0;
     char ack = 0;
 
@@ -86,12 +86,10 @@ int main(int argc, char *argv[]) {
     char *file_content = (char*)malloc(file_size+1);
     fseek(fp, 0, SEEK_SET);
 
-    int total_packets = (file_size / (PAYLOAD_SIZE-1)) + 1;
-    int base = 0;
-    int next_pkt = 0;
+    long int total_packets = (file_size / (PAYLOAD_SIZE-1)) + 1;
+    long int base = 0;
+    long int next_pkt = 0;
     int cwind = WINDOW_SIZE;
-    long int bits_sent = 0;
-    int num_seq_wrap = 0;
     int max_window = 18;
     int retransmit = 3;
     short int prev_ack = -1;
@@ -104,8 +102,8 @@ int main(int argc, char *argv[]) {
         //printf("\nnxtpkt: %d \n base: %d \n cwind: %d \n", next_pkt, base, cwind);
         if (next_pkt < base + cwind){
             int bytes_send = PAYLOAD_SIZE-1;
-            if(bits_sent + bytes_send >= file_size){          //last packet sends less bytes
-                bytes_send = file_size - bits_sent;
+            if(seq_num + bytes_send >= file_size){          //last packet sends less bytes
+                bytes_send = file_size - seq_num;
                 last = 1;
             }
             fseek(fp, next_pkt * (PAYLOAD_SIZE-1), SEEK_SET);
@@ -117,10 +115,9 @@ int main(int argc, char *argv[]) {
             if(sendto(send_sockfd, &pkt, sizeof(pkt), 0, (struct sockaddr *)&server_addr_to, sizeof(server_addr_to)) < 0){
                 perror("send error");
             }
-            //printf("Packet #%d\n %s\n\n", next_pkt, file_content);
+            printf("Packet #%ld\n %s\n\n", next_pkt, file_content);
 
-            bits_sent += bytes_send;
-            seq_num = (bits_sent) % 40000;                          //updating sequence number
+            seq_num += bytes_send;                        //updating sequence number
             printSend(&pkt, 0);
             //printf("\nTotal packets: %d\n", total_packets);
             if(base == next_pkt){
@@ -148,27 +145,25 @@ int main(int argc, char *argv[]) {
                 close(send_sockfd);
                 return 0;
             }
-            if ((base*(PAYLOAD_SIZE-1) % 40000) > ack_pkt.acknum + 20000){
-                num_seq_wrap += 1;
-            }
 
-            if(ack_pkt.acknum + (num_seq_wrap * 40000) >= base * (PAYLOAD_SIZE - 1)){
-                base = ((ack_pkt.acknum + (num_seq_wrap * 40000)) / (PAYLOAD_SIZE - 1));
+            if(ack_pkt.acknum >= base * (PAYLOAD_SIZE - 1)){
+                base = ack_pkt.acknum/ (PAYLOAD_SIZE - 1);
                 printf("updated base: %d\n seqwrap ", base);
                 if (cwind < max_window){
                     cwind += 1;
                 }
-            } else if (prev_ack == ack_pkt.acknum){
-                retransmit -= 1;
-                if(retransmit == 0){
-                    bits_sent = base*(PAYLOAD_SIZE - 1);
-                    seq_num = bits_sent % 40000;
-                    next_pkt = base;
-                    last = 0;
-                }
-            } else {
-                prev_ack = ack_pkt.acknum;
             }
+            // } else if (prev_ack == ack_pkt.acknum){
+            //     retransmit -= 1;
+            //     if(retransmit == 0){
+            //         seq_num = base*(PAYLOAD_SIZE - 1);
+            //         next_pkt = base;
+            //         last = 0;
+            //         retransmit = 3;
+            //     }
+            // } else {
+            //     prev_ack = ack_pkt.acknum;
+            // }
             if(next_pkt < base){
                 next_pkt = base;
             }
@@ -187,8 +182,7 @@ int main(int argc, char *argv[]) {
 
         if(milliseconds >= 110){    //timeout
             printf("\nTIMEOUT\n");
-            bits_sent = base*(PAYLOAD_SIZE - 1);
-            seq_num = bits_sent % 40000;
+            seq_num = base*(PAYLOAD_SIZE - 1);
             next_pkt = base;
             last = 0;
             cwind = (cwind / 2) + 1;
