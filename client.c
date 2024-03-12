@@ -89,10 +89,12 @@ int main(int argc, char *argv[]) {
     long int total_packets = (file_size / (PAYLOAD_SIZE-1)) + 1;
     long int base = 0;
     long int next_pkt = 0;
-    int cwind = WINDOW_SIZE;
-    int max_window = 18;
+    double cwind = 1;
+    int max_window = 100000;
     int retransmit = 3;
     short int prev_ack = -1;
+    int ssthresh = 1000000;
+    int stage = 0; //0: slow start, 1: congestion avoid, 2: fast recovery
 
     while(1){                         //while there is more to read
 
@@ -115,7 +117,7 @@ int main(int argc, char *argv[]) {
             if(sendto(send_sockfd, &pkt, sizeof(pkt), 0, (struct sockaddr *)&server_addr_to, sizeof(server_addr_to)) < 0){
                 perror("send error");
             }
-            printf("Packet #%ld\n %s\n\n", next_pkt, file_content);
+            //printf("Packet #%ld\n %s\n\n", next_pkt, file_content);
 
                       //updating sequence number
             printSend(&pkt, 0);
@@ -149,16 +151,38 @@ int main(int argc, char *argv[]) {
             if(ack_pkt.acknum >= base){
                 base = ack_pkt.acknum;
                 printf("updated base: %d\n seqwrap ", base);
-                if (cwind < max_window){
+                // receives correct ack
+                if(stage == 0){
                     cwind += 1;
+                    if (cwind > ssthresh){
+                        stage = 1;
+                    }
+                } else if (stage == 1){
+                    cwind += 1/cwind;
+                } else {
+                    cwind = ssthresh;
+                    stage = 1;
                 }
+                retransmit = 3;
             } else if (prev_ack == ack_pkt.acknum){
                 retransmit -= 1;
+                if (stage == 2){
+                    cwind += 1;
+                }
                 if(retransmit == 0){
+                    //dupe 3
                     seq_num = base*(PAYLOAD_SIZE - 1);
                     next_pkt = base;
                     last = 0;
                     retransmit = 3;
+                    if(stage == 0){
+                        stage = 2;
+                    } else if(stage == 1){
+                        ssthresh = cwind / 2;
+                        cwind = ssthresh + 3;
+                        stage = 2;
+                    }
+
                 }
             } else {
                 prev_ack = ack_pkt.acknum;
@@ -180,10 +204,10 @@ int main(int argc, char *argv[]) {
             printf("\nTIMEOUT\n");
             next_pkt = base;
             last = 0;
-            cwind = (cwind / 2) + 1;
-            if(cwind < 5){
-                cwind = 5;
-            }
+            ssthresh = cwind/2;
+            cwind = 1;
+            retransmit = 3;
+            stage = 0;
         }
         usleep(10000);
 

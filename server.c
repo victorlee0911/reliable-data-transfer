@@ -61,7 +61,7 @@ int main() {
     pfds[0].events = POLLIN;
 
     int complete = 0;
-
+    
 
     printf("listening");
 
@@ -98,7 +98,7 @@ int main() {
 
         if(complete){            // preparing to close down server bc Last flag received
         //keep open in case of another receive
-            int events = poll(pfds, 1, 3000);       // keep server open for a while to check if client is still sending packets
+            int events = poll(pfds, 1, 2000);       // keep server open for a while to check if client is still sending packets
             if (events == 0){                       // no packets received -> assumed client closed -> close server
                 printf("finished packets");
                 break;
