@@ -130,7 +130,7 @@ int main(int argc, char *argv[]) {
         }
         
         // searching for acks
-        int events = poll(pfds, 1, 50);
+        int events = poll(pfds, 1, 40);
         while(events != 0){
             if(events == -1){
                 perror("poll error");
@@ -209,7 +209,7 @@ int main(int argc, char *argv[]) {
             retransmit = 3;
             stage = 0;
         }
-        usleep(10000);
+        usleep(15000);
 
     }
  
